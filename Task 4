@@ -1,0 +1,51 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
+
+# Sample movie data
+data = {
+    'title': ['The Shawshank Redemption', 'The Godfather', 'The Dark Knight', 'Pulp Fiction', 'Forrest Gump'],
+    'genre': ['Drama', 'Crime', 'Action', 'Crime', 'Drama'],
+    'description': ['Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.',
+                    'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.',
+                    'When the menace known as The Joker emerges from his mysterious past, he wreaks havoc and chaos on the people of Gotham.',
+                    'The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.',
+                    'The presidencies of Kennedy and Johnson, the events of Vietnam, Watergate, and other historical events unfold from the perspective of an Alabama man with an IQ of 75, whose only desire is to be reunited with his childhood sweetheart.'],
+}
+
+# Convert data to DataFrame
+df = pd.DataFrame(data)
+
+# Create a TF-IDF vectorizer
+tfidf_vectorizer = TfidfVectorizer(stop_words='english')
+
+# Compute TF-IDF matrix
+tfidf_matrix = tfidf_vectorizer.fit_transform(df['description'])
+
+# Compute similarity scores using linear kernel
+cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+# Function to recommend movies based on user preferences
+def recommend_movies(user_preferences, df, cosine_sim):
+    # Transform user preferences into TF-IDF vector
+    user_tfidf = tfidf_vectorizer.transform([user_preferences])
+
+    # Compute similarity scores between user preferences and all movies
+    sim_scores = linear_kernel(user_tfidf, tfidf_matrix).flatten()
+
+    # Get indices of top similar movies
+    top_indices = sim_scores.argsort()[:-6:-1]
+
+    # Get titles of top similar movies
+    recommended_movies = df.iloc[top_indices]['title']
+
+    return recommended_movies
+
+# Example user preferences
+user_preferences = "crime drama"
+
+# Recommend movies based on user preferences
+recommended_movies = recommend_movies(user_preferences, df, cosine_sim)
+
+print("Recommended movies based on your preferences:")
+print(recommended_movies)
